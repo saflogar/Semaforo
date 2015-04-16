@@ -119,4 +119,14 @@ public class Interseccion  implements Runnable {
 		}
 		
 	}
+	
+	public void suscribirSemaforo1(SemaforoListener lis)
+	{
+		semaforos[0].addListener(lis);
+	}
+	
+	public void suscribirSemaforo2(SemaforoListener lis)
+	{
+		semaforos[1].addListener(lis);
+	}
 }

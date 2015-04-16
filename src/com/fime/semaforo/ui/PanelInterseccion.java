@@ -9,8 +9,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.fime.semaforo.ColorSemaforo;
 import com.fime.semaforo.Interseccion;
 import com.fime.semaforo.InterseccionListener;
+import com.fime.semaforo.SemaforoListener;
 
 
 public class PanelInterseccion extends JPanel implements InterseccionListener{
@@ -21,30 +23,50 @@ public class PanelInterseccion extends JPanel implements InterseccionListener{
 	private ImageIcon carImage;
 	private JLabel carLabel;
 	private JLabel[][] listaCarros;
+	private JPanel panelSemaforo1 ;
+	private Interseccion interseccionEng;
+	private JPanel panelSemaforo2;
 
 	public PanelInterseccion()
 	{
-		listaCarros = new JLabel[2][6];
-		createPabelInterseccion();
-		Interseccion interseccionEng = new Interseccion();
+		
+		
+		 interseccionEng = new Interseccion();
 		interseccionEng.addListener(this);
 		Thread t = new Thread(interseccionEng);
 		t.start();
+		 createPabelInterseccion();
+
 	}
 	
 	private void createPabelInterseccion()
 	{
+		listaCarros = new JLabel[2][6];
 		streetsImage = new ImageIcon("images/calle3.png");
 		labelStreets = new JLabel(streetsImage);
+		panelSemaforo1 = new PanelSemaforo();
+		panelSemaforo2 = new PanelSemaforo();
+		
 		labelStreets.setSize(new Dimension(500,500));
+		panelSemaforo1.setPreferredSize(new Dimension(100,200));
+		panelSemaforo2.setPreferredSize(new Dimension(100,200));
+		
 		this.setLayout(null);
 		this.add(labelStreets);
+		this.add(panelSemaforo1);
+		this.add(panelSemaforo2);
 		Insets insets = this.getInsets();
+		panelSemaforo1.setBounds((int)(insets.right - panelSemaforo1.getSize().width),0,panelSemaforo1.getPreferredSize().width,panelSemaforo1.getPreferredSize().height);
+		panelSemaforo2.setBounds(300,0,panelSemaforo2.getPreferredSize().width,panelSemaforo2.getPreferredSize().height);
+
 		labelStreets.setBounds((int)(insets.right-insets.right/2),(int)(insets.bottom - insets.bottom/2),labelStreets.getPreferredSize().width,labelStreets.getPreferredSize().height);
+		
+		interseccionEng.suscribirSemaforo1((SemaforoListener) panelSemaforo1);
+		interseccionEng.suscribirSemaforo2((SemaforoListener) panelSemaforo2);
+		
 	}
 	
 	public void llegoCarro(int[] carro) {
-		
 		/*llegoCarro(int[] c) se llama cada vez que llega un carro*/
 		// TODO Auto-generated method stub
 		System.out.println("Carril A = "+carro[0]+"Carril B = "+carro[1]);
@@ -57,16 +79,61 @@ public class PanelInterseccion extends JPanel implements InterseccionListener{
 	
 	public void seFueCarro(int[] carros) {
 		// TODO Auto-generated method stub
+		int numCarLista1 = 0;
+		int numCarLista2  = 0;
+		for (int i = 0; i < listaCarros[0].length ; i++)
+		{
+			if(listaCarros[0][i] != null) numCarLista1 ++;
+			if(listaCarros[1][i] != null) numCarLista2 ++;
+		}
+				
+		
+		//SE FUE CARRO EN CARRIL HORIZONTAL
+		if (carros[0] < numCarLista1)
+		{
+			for (JLabel carroLbl : listaCarros[0]) 
+			{
+				
+				if (carroLbl != null)
+				{
+					Rectangle carrLblBound = carroLbl.getBounds();
+					animacionIdaCarro(carrLblBound, new Point(0,carrLblBound.y), carroLbl);
+					carroLbl.setVisible(false);
+					carroLbl = null;
+				}
+				
+			}
+			
+		}
+		//SE FUE CARRO EN CARRIL VERTICAL
+		else if (carros[1] < numCarLista2)
+		{
+			for (JLabel carroLbl : listaCarros[1]) 
+			{
+				
+				if (carroLbl != null)
+				{
+					Rectangle carrLblBound = carroLbl.getBounds();
+					animacionIdaCarro(carrLblBound, new Point(carrLblBound.x,500), carroLbl);
+					carroLbl.setVisible(false);
+					carroLbl = null;
+					
+				}
+			}
+		}
+		
 		
 	}
-	public void animacionIda()
-	{
-		
-	}
-	
+
+	//ANIMACION ARRIBA - ABAJO , IZQUIERDA - DERECHA
 	public void animacionIdaCarro(Rectangle carrBounds, Point endPoint, JLabel label)
 	{
-		/*Animacion de Arriba - Abajo, Izquierda - Derecha*/
+		//VARS FOR ANIMATION SPEED
+		final int FPS = 120;
+		final double SKIP_TICKS = 1000 /FPS;
+		double sleepTime;
+		
+
 		int x0 = carrBounds.x;
 		int y0 = carrBounds.y;
 		int x1 = endPoint.x;
@@ -79,25 +146,53 @@ public class PanelInterseccion extends JPanel implements InterseccionListener{
 		
 		int x = x0;
 		int y = y0;
+		
+		double nextGameTick = System.currentTimeMillis();
+		
+		
 		if (enX)
 		{
 			for (int i = 0; i <  Math.abs(dx); i++)
 			{
+				 nextGameTick += SKIP_TICKS;
+			        sleepTime = nextGameTick - System.currentTimeMillis();
+			        if( sleepTime >= 0.0 ) {
+			            try {
+							Thread.sleep( (long) sleepTime );
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+			        }
+			        
 				if (derecha)
 					x++;
 				else x--;
+				label.setBounds(x,y+100, label.getPreferredSize().width, label.getPreferredSize().height);
 			}
-			label.setBounds(x, y, label.getPreferredSize().width, label.getPreferredSize().height);
+			
 		}
 		else
 		{
 			for (int i = 0; i < Math.abs(dy); i++)
 			{
+				 nextGameTick += SKIP_TICKS;
+			        sleepTime = nextGameTick - System.currentTimeMillis();
+			        if( sleepTime >= 0.0 ) {
+			            try {
+							Thread.sleep( (long) sleepTime );
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+			        }
+				
 				if (abajo)
 					y++;
 				else y--;
+				label.setBounds(x+100, y, label.getPreferredSize().width, label.getPreferredSize().height);
 			}
-			label.setBounds(x, y, label.getPreferredSize().width, label.getPreferredSize().height);
+			
 		}
 		
 	}
@@ -182,7 +277,6 @@ public class PanelInterseccion extends JPanel implements InterseccionListener{
 	
 	public void animacionLlegada(int[] carriles, Insets insets, int sepEntreCarros)
 	{
-		
 		int sepEntreCarriles = 80;//Separación entre un carril y otro
 		int conteo=0;
 		boolean vertical;
@@ -199,6 +293,14 @@ public class PanelInterseccion extends JPanel implements InterseccionListener{
 			conteo ++;
 			
 		}			
+	}
+
+	@Override
+	public void cambioColorSemaforo(ColorSemaforo color) {
+		// TODO Auto-generated method stub
+		
+		
+		
 	}
 
 

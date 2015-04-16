@@ -5,5 +5,9 @@ public interface InterseccionListener {
 	public void llegoCarro(int[] carros);
 	
 	public void seFueCarro(int[] carros);
+	
+	public void cambioColorSemaforo(ColorSemaforo color);
+	
+
 
 }
